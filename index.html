@@ -169,6 +169,12 @@
     gap: 8px;
   }
 
+  #damButtons {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
   #buildDam {
     border: 1px solid #4b7ea8;
     background: #12365a;
@@ -179,7 +185,18 @@
     cursor: pointer;
   }
 
-  #buildDam:disabled {
+  #storeWater {
+    border: 1px solid #4b7ea8;
+    background: #12365a;
+    color: #d8eeff;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  #buildDam:disabled,
+  #storeWater:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
@@ -258,7 +275,7 @@
   </div>
   <div id="hud">
     <span id="score">Score: 0</span>
-    <span id="timer">Flourish: --</span>
+    <span id="timer">Flourishing: --</span>
     <div id="tinInfo">
       <span id="storedWater">Stored: 0/100</span>
       <div id="tinRow">
@@ -269,8 +286,11 @@
     </div>
   </div>
   <div id="damPanel">
-    <button id="buildDam" type="button" disabled>Build Dam (locked)</button>
-    <span id="controlHint">Move: ← → ↑ ↓ | Build Dam: D</span>
+    <div id="damButtons">
+      <button id="buildDam" type="button" disabled>Build Dam (locked)</button>
+      <button id="storeWater" type="button" disabled>Store Water: S</button>
+    </div>
+    <span id="controlHint">Move: ← → ↑ ↓ | Build Dam: D | Store Water: S</span>
   </div>
   <div id="boardWrap">
     <canvas width="440" height="440" id="game"></canvas>
@@ -286,12 +306,13 @@
 const canvas = document.getElementById('game');
 const context = canvas.getContext('2d');
 const scoreEl = document.getElementById('score');
-const timerEl = document.getElementById('timer');
+const timerEl = document.querySelector('#timer');
 const storedWaterEl = document.getElementById('storedWater');
 const statusEl = document.getElementById('status');
 const milestoneEl = document.getElementById('milestone');
 const startBtn = document.getElementById('startBtn');
 const buildDamBtn = document.getElementById('buildDam');
+const storeWaterBtn = document.getElementById('storeWater');
 const playAgainBtn = document.getElementById('playAgainBtn');
 const tinEls = [
   document.getElementById('tin1'),
@@ -381,6 +402,7 @@ function resetGame() {
   startBtn.classList.remove('hidden');
   startBtn.disabled = false;
   buildDamBtn.disabled = true;
+  storeWaterBtn.disabled = true;
   buildDamBtn.textContent = 'Build Dam (locked)';
   playAgainBtn.classList.add('hidden');
   setSuggestion('');
@@ -399,6 +421,7 @@ function startGame() {
 
 function updateHud() {
   scoreEl.textContent = 'Score: ' + game.score + ' / ' + game.floodScore;
+  storeWaterBtn.disabled = game.state !== 'playing' || game.score <= 0;
 
   const perTin = game.waterStorageMax / tinEls.length;
   game.tinsFilled = Math.min(tinEls.length, Math.floor(game.storedWater / perTin));
@@ -432,29 +455,29 @@ function updateHud() {
 
 function updateTimerHud(nowMs) {
   if (game.state === 'start') {
-    timerEl.textContent = 'Flourish: --';
+    timerEl.textContent = 'Flourishing: --';
     return;
   }
 
   if (game.state === 'playing' && !game.damBuilt) {
-    timerEl.textContent = 'Flourish: Build Dam';
+    timerEl.textContent = 'Flourishing: Build Dam';
     return;
   }
 
   if (game.state === 'playing' && game.damBuilt) {
     const elapsedSeconds = (nowMs - game.flourishStartMs) / 1000;
     const remainingSeconds = Math.max(0, Math.ceil(game.flourishWinSeconds - elapsedSeconds));
-    timerEl.textContent = 'Flourish: ' + remainingSeconds + 's';
+    timerEl.textContent = 'Flourishing: ' + remainingSeconds + 's';
     return;
   }
 
   if (game.state === 'won') {
-    timerEl.textContent = 'Flourish: Complete';
+    timerEl.textContent = 'Flourishing: Complete';
     return;
   }
 
   if (game.state === 'lost') {
-    timerEl.textContent = 'Flourish: Failed';
+    timerEl.textContent = 'Flourishing: Failed';
   }
 }
 
@@ -495,6 +518,7 @@ function loseGame(reason) {
   // Loss screen state: show flood messaging and Play Again button.
   game.state = 'lost';
   buildDamBtn.disabled = true;
+  storeWaterBtn.disabled = true;
   buildDamBtn.textContent = 'Flooded';
   setStatus(reason);
   setSuggestion('Deep-blue flood took over. Press Play Again.');
@@ -506,6 +530,7 @@ function winGame() {
   // Win screen state: show celebration messaging, Play Again, and confetti.
   game.state = 'won';
   buildDamBtn.disabled = true;
+  storeWaterBtn.disabled = true;
   buildDamBtn.textContent = 'Village Flourishing ✓';
   setStatus('Congratulations! Village flourished for 30 seconds under 135 with full storage.');
   setSuggestion('You win! Press Play Again.');
@@ -621,6 +646,34 @@ function buildDam() {
   updateHud();
   setStatus('Dam built! Town now uses 5 stored water per second.');
   setSuggestion('Keep village flourishing for 30 seconds, stay under ' + game.floodScore + ', and reach 100 stored water.');
+}
+
+function storeWater() {
+  if (game.state !== 'playing') {
+    return;
+  }
+
+  if (game.storedWater >= game.waterStorageMax) {
+    setStatus('Storage is already full. Build the dam and protect the village.');
+    return;
+  }
+
+  if (game.score <= 0) {
+    setStatus('No score to store yet. Collect rain first.');
+    return;
+  }
+
+  const availableStorage = game.waterStorageMax - game.storedWater;
+  const pointsToStore = Math.min(game.score, availableStorage);
+
+  game.storedWater = Math.min(game.waterStorageMax, game.storedWater + pointsToStore);
+  game.score = Math.max(0, game.score - pointsToStore);
+  if (game.storedWater >= game.waterStorageMax) {
+    game.reachedMaxStorage = true;
+  }
+
+  updateHud();
+  setStatus('Stored ' + pointsToStore + ' water from score.');
 }
 
 function spawnDrop() {
@@ -962,6 +1015,11 @@ document.addEventListener('keydown', function(e) {
     e.preventDefault();
     buildDam();
   }
+
+  if (e.key === 's' || e.key === 'S') {
+    e.preventDefault();
+    storeWater();
+  }
 });
 
 document.addEventListener('keyup', function(e) {
@@ -985,6 +1043,10 @@ startBtn.addEventListener('click', function() {
 
 buildDamBtn.addEventListener('click', function() {
   buildDam();
+});
+
+storeWaterBtn.addEventListener('click', function() {
+  storeWater();
 });
 
 playAgainBtn.addEventListener('click', function() {
