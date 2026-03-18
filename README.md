@@ -4,8 +4,10 @@ This README formats the previous and following prompts into one place so you can
 
 ## Project File Alignment
 
-- Prompt guide (all prompts): `README.md` and `index.html`
-- JavaScript game MVP (Prompt 8 mechanics: left/right river snake + random rain + dam suggestion flow): `snake.html`
+- Primary playable game (Prompt 8 mechanics): `index.html`
+- Prompt guide text (all prompts): `README.md`
+- Archived prompt-guide page snapshot: `prompts-guide.html`
+- Compatibility redirect: `snake.html` → `index.html`
 - Prompt 6 HTML/CSS-only prototype: `prompt6-water-runner.html` + `prompt6-water-runner.css`
 - Legacy starter files from the earlier grid game: `script.js` + `style.css` (kept for reference)
 
@@ -278,12 +280,12 @@ Output:
 - Include where to place the library import and milestone checks in the game loop.
 ```
 
-### Prompt 5.1 (Copy/Paste - Directly in `snake.html`)
+### Prompt 5.1 (Copy/Paste - Directly in `index.html`)
 ```text
-Implement Prompt 5 directly in my existing snake.html game.
+Implement Prompt 5 directly in my existing index.html game.
 
 Do these exact changes:
-1) Add canvas-confetti via CDN script tag in snake.html.
+1) Add canvas-confetti via CDN script tag in index.html.
 2) Track elapsed seconds from the moment gameplay starts.
 3) Trigger confetti when:
    - water value reaches 10 in under 10 seconds
@@ -301,7 +303,7 @@ Implementation details:
 - Add a small on-screen message when confetti milestone is hit.
 
 Return:
-- A patch-style response showing exactly what changed in snake.html.
+- A patch-style response showing exactly what changed in index.html.
 ```
 
 ---
@@ -387,9 +389,9 @@ Implementation notes:
 - Include a keyboard shortcut or button for building the dam.
 ```
 
-### Prompt 7.1 (Copy/Paste - Directly in `snake.html`)
+### Prompt 7.1 (Copy/Paste - Directly in `index.html`)
 ```text
-Implement Prompt 7 directly in snake.html with minimal code changes.
+Implement Prompt 7 directly in index.html with minimal code changes.
 
 Technical requirements:
 - Add state flags: damBuilt, damPromptShown, floodTriggered.
@@ -442,9 +444,9 @@ Visual requirements:
 - Show dry village in top-left and improved/flourishing village after successful damming.
 ```
 
-### Prompt 8.1 (Copy/Paste - Directly in `snake.html`)
+### Prompt 8.1 (Copy/Paste - Directly in `index.html`)
 ```text
-Implement Prompt 8 directly in snake.html.
+Implement Prompt 8 directly in index.html.
 
 Technical requirements:
 - Add Start button-based game launch.
