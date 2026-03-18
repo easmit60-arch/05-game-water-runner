@@ -270,17 +270,15 @@ const game = {
   rainIntensity: 0.52,
   tinsRequired: 3,
   damPromptScore: 25,
-  damDeadlineScore: 25,
   waterStorageMax: 100,
   floodScore: 135,
   flourishWinSeconds: 30,
   clearPromptScore: 30,
-  drainIntervalMs: 950,
+  drainIntervalMs: 1000,
+  drainAmountPerTick: 5,
   storedWater: 0,
   tinsFilled: 0,
   damBuilt: false,
-  damBuiltOnTime: false,
-  damBuiltAtScore: 0,
   reachedMaxStorage: false,
   damPromptShown: false,
   lastPenaltyTickMs: 0,
@@ -333,8 +331,6 @@ function resetGame() {
   game.frame = 0;
   game.drops = [];
   game.damBuilt = false;
-  game.damBuiltOnTime = false;
-  game.damBuiltAtScore = 0;
   game.reachedMaxStorage = false;
   game.damPromptShown = false;
   game.lastPenaltyTickMs = 0;
@@ -421,8 +417,6 @@ function checkFloodLoss() {
 
   if (!game.damBuilt) {
     loseGame('You lost: no dam was built before score ' + game.floodScore + '.');
-  } else if (!game.damBuiltOnTime) {
-    loseGame('You lost: dam was built too late (after 25), then flood hit over ' + game.floodScore + '.');
   } else {
     loseGame('You lost: water rose above ' + game.floodScore + '.');
   }
@@ -494,13 +488,13 @@ function drawConfetti() {
 }
 
 function updateStoredWaterDrain(nowMs) {
-  if (game.state !== 'playing' || !game.damBuilt || !game.damBuiltOnTime) {
+  if (game.state !== 'playing' || !game.damBuilt) {
     return;
   }
 
   while (nowMs - game.lastPenaltyTickMs >= game.drainIntervalMs) {
     game.lastPenaltyTickMs += game.drainIntervalMs;
-    game.storedWater = Math.max(0, game.storedWater - 1);
+    game.storedWater = Math.max(0, game.storedWater - game.drainAmountPerTick);
     updateHud();
   }
 }
@@ -516,11 +510,6 @@ function updateFlourishWin(nowMs) {
 
   const elapsedSeconds = (nowMs - game.flourishStartMs) / 1000;
   const remainingSeconds = Math.max(0, Math.ceil(game.flourishWinSeconds - elapsedSeconds));
-
-  if (!game.damBuiltOnTime) {
-    setSuggestion('Dam built after 25: keep playing, but this run cannot win.');
-    return;
-  }
 
   if (game.score < game.floodScore) {
     const storageGoal = game.reachedMaxStorage ? 'storage goal met' : ('store ' + (game.waterStorageMax - game.storedWater) + ' more water');
@@ -547,8 +536,6 @@ function buildDam() {
   }
 
   game.damBuilt = true;
-  game.damBuiltAtScore = game.score;
-  game.damBuiltOnTime = game.damBuiltAtScore <= game.damDeadlineScore;
   game.flourishStartMs = performance.now();
   game.lastPenaltyTickMs = game.flourishStartMs;
   game.river.direction = -1;
@@ -557,13 +544,8 @@ function buildDam() {
   game.keys.up = false;
   game.keys.down = false;
   updateHud();
-  if (game.damBuiltOnTime) {
-    setStatus('Dam built on time. Town now drains stored water steadily.');
-    setSuggestion('Store up to 100 water and keep village flourishing for 30 seconds under 135 score.');
-  } else {
-    setStatus('Dam built too late (after 25). You can continue, but cannot win this run.');
-    setSuggestion('Late dam warning: flood risk still active over ' + game.floodScore + '.');
-  }
+  setStatus('Dam built! Town now uses 5 stored water per second.');
+  setSuggestion('Keep village flourishing for 30 seconds, stay under ' + game.floodScore + ', and reach 100 stored water.');
 }
 
 function spawnDrop() {
