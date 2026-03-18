@@ -11,7 +11,7 @@
   }
 
   body {
-    background: #040b14;
+    background: #0f4f82;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -25,7 +25,7 @@
     display: flex;
     flex-direction: column;
     gap: 8px;
-    background: #0a1524;
+    background: #0d3b66;
     border: 1px solid #365a7b;
     border-radius: 10px;
     padding: 10px;
@@ -78,7 +78,7 @@
     padding: 6px 8px;
     border: 1px solid #365a7b;
     border-radius: 6px;
-    background: #0c1c30;
+    background: #145286;
   }
 
   .top-nav a {
@@ -107,6 +107,12 @@
     align-items: center;
     gap: 6px;
     font-size: 12px;
+  }
+
+  #storedWater {
+    min-width: 104px;
+    font-weight: 700;
+    color: #c9ecff;
   }
 
   #tinRow {
@@ -159,7 +165,7 @@
     width: 100%;
     max-width: 440px;
     align-self: center;
-    background: #07101c;
+    background: #0b4a78;
   }
 
   #status {
@@ -175,6 +181,22 @@
     font-size: 13px;
     text-align: center;
     color: #ffd25e;
+  }
+
+  #playAgainBtn {
+    border: 1px solid #8fc7ef;
+    background: #1f6aa2;
+    color: #f2fbff;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    align-self: center;
+  }
+
+  .hidden {
+    display: none;
   }
 
   @media (max-width: 500px) {
@@ -208,7 +230,7 @@
   <div id="hud">
     <span id="score">Score: 0</span>
     <div id="tinInfo">
-      <span>Tins</span>
+      <span id="storedWater">Stored: 0/100</span>
       <div id="tinRow">
         <span class="tin" id="tin1"></span>
         <span class="tin" id="tin2"></span>
@@ -218,20 +240,23 @@
   </div>
   <div id="damPanel">
     <button id="buildDam" type="button" disabled>Build Dam (locked)</button>
-    <span id="controlHint">Move: ← → | Build Dam: D</span>
+    <span id="controlHint">Move: ← → ↑ ↓ | Build Dam: D</span>
   </div>
   <canvas width="440" height="440" id="game"></canvas>
   <p id="status"></p>
   <p id="milestone"></p>
+  <button id="playAgainBtn" type="button" class="hidden">Play Again</button>
 </div>
 <script>
 const canvas = document.getElementById('game');
 const context = canvas.getContext('2d');
 const scoreEl = document.getElementById('score');
+const storedWaterEl = document.getElementById('storedWater');
 const statusEl = document.getElementById('status');
 const milestoneEl = document.getElementById('milestone');
 const startBtn = document.getElementById('startBtn');
 const buildDamBtn = document.getElementById('buildDam');
+const playAgainBtn = document.getElementById('playAgainBtn');
 const tinEls = [
   document.getElementById('tin1'),
   document.getElementById('tin2'),
@@ -242,18 +267,30 @@ const game = {
   state: 'start',
   frame: 0,
   score: 0,
-  rainIntensity: 0.72,
+  rainIntensity: 0.52,
   tinsRequired: 3,
   damPromptScore: 25,
+  damDeadlineScore: 25,
+  waterStorageMax: 100,
+  floodScore: 135,
+  flourishWinSeconds: 30,
   clearPromptScore: 30,
+  drainIntervalMs: 950,
+  storedWater: 0,
   tinsFilled: 0,
   damBuilt: false,
+  damBuiltOnTime: false,
+  damBuiltAtScore: 0,
+  reachedMaxStorage: false,
   damPromptShown: false,
-  keys: { left: false, right: false },
+  lastPenaltyTickMs: 0,
+  flourishStartMs: 0,
+  confetti: [],
+  keys: { left: false, right: false, up: false, down: false },
   river: {
     x: canvas.width / 2,
     y: canvas.height - 26,
-    speed: 2.2,
+    speed: 1.7,
     direction: 1,
     segments: [],
     maxSegments: 12
@@ -267,6 +304,8 @@ function randomInt(min, max) {
 
 const KEY_LEFT = 'ArrowLeft';
 const KEY_RIGHT = 'ArrowRight';
+const KEY_UP = 'ArrowUp';
+const KEY_DOWN = 'ArrowDown';
 
 function setStatus(message) {
   statusEl.textContent = message;
@@ -278,6 +317,7 @@ function setSuggestion(message) {
 
 function resetRiver() {
   game.river.x = canvas.width / 2;
+  game.river.y = canvas.height - 26;
   game.river.direction = 1;
   game.river.segments = [];
   game.river.maxSegments = 12;
@@ -288,15 +328,27 @@ function resetRiver() {
 
 function resetGame() {
   game.score = 0;
+  game.storedWater = 0;
   game.tinsFilled = 0;
   game.frame = 0;
   game.drops = [];
   game.damBuilt = false;
+  game.damBuiltOnTime = false;
+  game.damBuiltAtScore = 0;
+  game.reachedMaxStorage = false;
   game.damPromptShown = false;
+  game.lastPenaltyTickMs = 0;
+  game.flourishStartMs = 0;
+  game.confetti = [];
   game.keys.left = false;
   game.keys.right = false;
+  game.keys.up = false;
+  game.keys.down = false;
+  startBtn.textContent = 'Start';
+  startBtn.disabled = false;
   buildDamBtn.disabled = true;
   buildDamBtn.textContent = 'Build Dam (locked)';
+  playAgainBtn.classList.add('hidden');
   setSuggestion('');
   resetRiver();
   updateHud();
@@ -306,15 +358,20 @@ function startGame() {
   resetGame();
   game.state = 'playing';
   startBtn.disabled = true;
-  setStatus('Use left/right to steer the river and catch the rain.');
+  setStatus('Move with arrows, collect rain, and build a dam by score 25.');
 }
 
 function updateHud() {
-  scoreEl.textContent = 'Score: ' + game.score;
-  game.tinsFilled = Math.min(3, Math.floor(game.score / 8));
+  scoreEl.textContent = 'Score: ' + game.score + ' / ' + game.floodScore;
+
+  const perTin = game.waterStorageMax / tinEls.length;
+  game.tinsFilled = Math.min(tinEls.length, Math.floor(game.storedWater / perTin));
+  storedWaterEl.textContent = 'Stored: ' + game.storedWater + '/' + game.waterStorageMax;
 
   for (let i = 0; i < tinEls.length; i++) {
-    tinEls[i].classList.toggle('filled', game.tinsFilled >= i + 1);
+    const fillRatio = Math.max(0, Math.min(1, (game.storedWater - i * perTin) / perTin));
+    const fillPercent = Math.round(fillRatio * 100);
+    tinEls[i].style.background = 'linear-gradient(to top, #2f9bff 0 ' + fillPercent + '%, #d7dfe7 ' + fillPercent + '% 100%)';
   }
 
   if (game.damBuilt) {
@@ -323,17 +380,14 @@ function updateHud() {
     return;
   }
 
-  if (game.score >= game.damPromptScore && game.score < game.clearPromptScore) {
-    if (game.tinsFilled >= game.tinsRequired && game.state === 'playing') {
+  if (game.score >= game.damPromptScore) {
+    if (game.storedWater >= game.damPromptScore && game.state === 'playing') {
       buildDamBtn.textContent = 'Build Dam (D)';
       buildDamBtn.disabled = false;
     } else {
-      buildDamBtn.textContent = 'Need full tins';
+      buildDamBtn.textContent = 'Store 25 water first';
       buildDamBtn.disabled = true;
     }
-  } else if (game.score >= game.clearPromptScore) {
-    buildDamBtn.textContent = 'Suggestion Cleared';
-    buildDamBtn.disabled = true;
   } else {
     buildDamBtn.textContent = 'Build Dam (locked)';
     buildDamBtn.disabled = true;
@@ -347,8 +401,8 @@ function maybeShowDamSuggestion() {
 
   if (game.score >= game.damPromptScore && game.score < game.clearPromptScore && !game.damPromptShown) {
     game.damPromptShown = true;
-    setStatus('Build a dam now: use filled tins to route water to the village.');
-    setSuggestion('Suggestion: Build dam with tins before score 30.');
+    setStatus('Build a dam now: route water to the dry village.');
+    setSuggestion('Store water in tins and build by score 25 to stay win-eligible.');
   }
 
   if (game.score >= game.clearPromptScore && !game.damBuilt) {
@@ -356,39 +410,206 @@ function maybeShowDamSuggestion() {
   }
 }
 
+function checkFloodLoss() {
+  if (game.state !== 'playing') {
+    return;
+  }
+
+  if (game.score <= game.floodScore) {
+    return;
+  }
+
+  if (!game.damBuilt) {
+    loseGame('You lost: no dam was built before score ' + game.floodScore + '.');
+  } else if (!game.damBuiltOnTime) {
+    loseGame('You lost: dam was built too late (after 25), then flood hit over ' + game.floodScore + '.');
+  } else {
+    loseGame('You lost: water rose above ' + game.floodScore + '.');
+  }
+}
+
+function loseGame(reason) {
+  game.state = 'lost';
+  buildDamBtn.disabled = true;
+  buildDamBtn.textContent = 'Flooded';
+  setStatus(reason);
+  setSuggestion('Deep-blue flood took over. Press Play Again.');
+  startBtn.disabled = true;
+  playAgainBtn.classList.remove('hidden');
+}
+
+function winGame() {
+  game.state = 'won';
+  buildDamBtn.disabled = true;
+  buildDamBtn.textContent = 'Village Flourishing ✓';
+  setStatus('Congratulations! Village flourished for 30 seconds under 135 with full storage.');
+  setSuggestion('You win! Press Play Again.');
+  startBtn.disabled = true;
+  playAgainBtn.classList.remove('hidden');
+  launchConfetti();
+}
+
+function launchConfetti() {
+  game.confetti = [];
+  const pieces = 140;
+  const colors = ['#ffd35f', '#35c7ff', '#ffffff', '#7ef3a1', '#ff8db3'];
+
+  for (let i = 0; i < pieces; i++) {
+    game.confetti.push({
+      x: Math.random() * canvas.width,
+      y: -Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 3.8,
+      vy: 1.6 + Math.random() * 3.2,
+      size: 3 + Math.random() * 4,
+      color: colors[Math.floor(Math.random() * colors.length)]
+    });
+  }
+}
+
+function updateConfetti() {
+  for (let i = 0; i < game.confetti.length; i++) {
+    const piece = game.confetti[i];
+    piece.x += piece.vx;
+    piece.y += piece.vy;
+
+    if (piece.y > canvas.height + 12) {
+      piece.y = -8;
+      piece.x = Math.random() * canvas.width;
+    }
+
+    if (piece.x < -10) {
+      piece.x = canvas.width + 10;
+    } else if (piece.x > canvas.width + 10) {
+      piece.x = -10;
+    }
+  }
+}
+
+function drawConfetti() {
+  for (let i = 0; i < game.confetti.length; i++) {
+    const piece = game.confetti[i];
+    context.fillStyle = piece.color;
+    context.fillRect(piece.x, piece.y, piece.size, piece.size);
+  }
+}
+
+function updateStoredWaterDrain(nowMs) {
+  if (game.state !== 'playing' || !game.damBuilt || !game.damBuiltOnTime) {
+    return;
+  }
+
+  while (nowMs - game.lastPenaltyTickMs >= game.drainIntervalMs) {
+    game.lastPenaltyTickMs += game.drainIntervalMs;
+    game.storedWater = Math.max(0, game.storedWater - 1);
+    updateHud();
+  }
+}
+
+function updateFlourishWin(nowMs) {
+  if (game.state !== 'playing' || !game.damBuilt) {
+    return;
+  }
+
+  if (!game.flourishStartMs) {
+    game.flourishStartMs = nowMs;
+  }
+
+  const elapsedSeconds = (nowMs - game.flourishStartMs) / 1000;
+  const remainingSeconds = Math.max(0, Math.ceil(game.flourishWinSeconds - elapsedSeconds));
+
+  if (!game.damBuiltOnTime) {
+    setSuggestion('Dam built after 25: keep playing, but this run cannot win.');
+    return;
+  }
+
+  if (game.score < game.floodScore) {
+    const storageGoal = game.reachedMaxStorage ? 'storage goal met' : ('store ' + (game.waterStorageMax - game.storedWater) + ' more water');
+    setSuggestion('Flourish ' + remainingSeconds + 's left | ' + storageGoal + ' | keep score under ' + game.floodScore + '.');
+  }
+
+  if (elapsedSeconds >= game.flourishWinSeconds && game.score < game.floodScore && game.reachedMaxStorage) {
+    winGame();
+  }
+}
+
 function buildDam() {
   if (game.state !== 'playing' || game.damBuilt) {
     return;
   }
-  if (game.score < game.damPromptScore || game.tinsFilled < game.tinsRequired) {
+  if (game.score < game.damPromptScore) {
+    setStatus('Dam unlocks at score ' + game.damPromptScore + '.');
+    return;
+  }
+
+  if (game.storedWater < game.damPromptScore) {
+    setStatus('Store at least ' + game.damPromptScore + ' water in tins first.');
     return;
   }
 
   game.damBuilt = true;
+  game.damBuiltAtScore = game.score;
+  game.damBuiltOnTime = game.damBuiltAtScore <= game.damDeadlineScore;
+  game.flourishStartMs = performance.now();
+  game.lastPenaltyTickMs = game.flourishStartMs;
+  game.river.direction = -1;
+  game.keys.left = false;
+  game.keys.right = false;
+  game.keys.up = false;
+  game.keys.down = false;
   updateHud();
-  setStatus('Dam built! River now flows to the top-left village.');
-  setSuggestion('Great work: the village is green and flourishing.');
+  if (game.damBuiltOnTime) {
+    setStatus('Dam built on time. Town now drains stored water steadily.');
+    setSuggestion('Store up to 100 water and keep village flourishing for 30 seconds under 135 score.');
+  } else {
+    setStatus('Dam built too late (after 25). You can continue, but cannot win this run.');
+    setSuggestion('Late dam warning: flood risk still active over ' + game.floodScore + '.');
+  }
 }
 
 function spawnDrop() {
   game.drops.push({
     x: randomInt(8, canvas.width - 8),
     y: -12,
-    size: randomInt(6, 12),
-    vx: (Math.random() * 3.4) - 1.7,
-    vy: 2.8 + Math.random() * 3.3,
+    size: randomInt(5, 13),
+    vx: (Math.random() * 5.4) - 2.7,
+    vy: 3.3 + Math.random() * 4.2,
     phase: Math.random() * Math.PI * 2
   });
 }
 
 function updateRiver() {
-  if (game.keys.left && !game.keys.right) {
-    game.river.direction = -1;
-  } else if (game.keys.right && !game.keys.left) {
-    game.river.direction = 1;
-  }
+  if (game.damBuilt) {
+    const villageTargetX = 108;
+    const villageTargetY = 92;
+    const moveX = villageTargetX - game.river.x;
+    const moveY = villageTargetY - game.river.y;
+    if (Math.abs(moveX) > game.river.speed) {
+      game.river.x += Math.sign(moveX) * game.river.speed;
+      game.river.direction = moveX < 0 ? -1 : 1;
+    } else {
+      game.river.x = villageTargetX;
+    }
 
-  game.river.x += game.river.direction * game.river.speed;
+    if (Math.abs(moveY) > game.river.speed) {
+      game.river.y += Math.sign(moveY) * game.river.speed;
+    } else {
+      game.river.y = villageTargetY;
+    }
+  } else {
+    if (game.keys.left && !game.keys.right) {
+      game.river.direction = -1;
+    } else if (game.keys.right && !game.keys.left) {
+      game.river.direction = 1;
+    }
+
+    if (game.keys.up && !game.keys.down) {
+      game.river.y -= game.river.speed;
+    } else if (game.keys.down && !game.keys.up) {
+      game.river.y += game.river.speed;
+    }
+
+    game.river.x += game.river.direction * game.river.speed;
+  }
 
   if (game.river.x < 10) {
     game.river.x = 10;
@@ -396,6 +617,14 @@ function updateRiver() {
   } else if (game.river.x > canvas.width - 10) {
     game.river.x = canvas.width - 10;
     game.river.direction = -1;
+  }
+
+  const minRiverY = canvas.height * 0.62;
+  const maxRiverY = canvas.height - 20;
+  if (game.river.y < minRiverY) {
+    game.river.y = minRiverY;
+  } else if (game.river.y > maxRiverY) {
+    game.river.y = maxRiverY;
   }
 
   game.river.segments.unshift({ x: game.river.x, y: game.river.y });
@@ -407,6 +636,10 @@ function updateRiver() {
 function collectDrop(index) {
   game.drops.splice(index, 1);
   game.score += 1;
+  game.storedWater = Math.min(game.waterStorageMax, game.storedWater + 1);
+  if (game.storedWater >= game.waterStorageMax) {
+    game.reachedMaxStorage = true;
+  }
   game.river.maxSegments = Math.min(190, game.river.maxSegments + 1);
   updateHud();
   maybeShowDamSuggestion();
@@ -415,8 +648,10 @@ function collectDrop(index) {
 function updateDrops() {
   for (let i = game.drops.length - 1; i >= 0; i--) {
     const drop = game.drops[i];
-    drop.phase += 0.22;
-    drop.x += drop.vx + Math.sin(drop.phase) * 0.85;
+    drop.phase += 0.34;
+    drop.vx += (Math.random() - 0.5) * 0.22;
+    drop.vx = Math.max(-3.2, Math.min(3.2, drop.vx));
+    drop.x += drop.vx + Math.sin(drop.phase) * 1.15;
     drop.y += drop.vy;
 
     if (drop.y > canvas.height + 18 || drop.x < -24 || drop.x > canvas.width + 24) {
@@ -447,7 +682,7 @@ function drawVillage() {
   const villageW = 132;
   const villageH = 92;
 
-  context.fillStyle = game.damBuilt ? '#9adf83' : '#d6b98f';
+  context.fillStyle = game.damBuilt ? '#9adf83' : '#ccb086';
   context.fillRect(villageX, villageY + 26, villageW, villageH - 26);
 
   context.fillStyle = game.damBuilt ? '#ffdf8d' : '#c8ae81';
@@ -455,9 +690,20 @@ function drawVillage() {
   context.arc(villageX + villageW - 20, villageY + 16, 10, 0, Math.PI * 2);
   context.fill();
 
-  context.fillStyle = game.damBuilt ? '#5b9f4f' : '#8e7e64';
+  context.fillStyle = game.damBuilt ? '#5b9f4f' : '#7d6b54';
   context.fillRect(villageX + 12, villageY + 38, 18, 30);
   context.fillRect(villageX + 96, villageY + 40, 18, 28);
+
+  if (!game.damBuilt) {
+    context.strokeStyle = '#8d6e50';
+    context.beginPath();
+    context.moveTo(villageX + 20, villageY + 80);
+    context.lineTo(villageX + 36, villageY + 74);
+    context.lineTo(villageX + 52, villageY + 82);
+    context.lineTo(villageX + 68, villageY + 76);
+    context.lineTo(villageX + 84, villageY + 83);
+    context.stroke();
+  }
 
   context.fillStyle = '#9d744a';
   context.fillRect(villageX + 42, villageY + 44, 22, 22);
@@ -511,7 +757,7 @@ function drawRiver() {
 }
 
 function drawBoard() {
-  context.fillStyle = '#061321';
+  context.fillStyle = '#0a4a7a';
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   context.fillStyle = 'rgba(255,255,255,0.04)';
@@ -524,7 +770,7 @@ function drawBoard() {
   drawDrops();
   drawRiver();
 
-  if (!game.damBuilt && game.score >= game.damPromptScore && game.score < game.clearPromptScore) {
+  if (!game.damBuilt && game.score >= game.damPromptScore) {
     context.fillStyle = '#9e7a52';
     for (let block = 0; block < 4; block++) {
       context.fillRect(122 + block * 13, 82, 10, 8);
@@ -533,23 +779,76 @@ function drawBoard() {
 }
 
 function drawOverlay(text) {
-  context.fillStyle = 'rgba(0, 0, 0, 0.55)';
+  context.fillStyle = 'rgba(13, 72, 118, 0.52)';
   context.fillRect(0, 0, canvas.width, canvas.height);
   context.fillStyle = '#ffffff';
   context.font = 'bold 22px Arial';
   context.textAlign = 'center';
   context.fillText(text, canvas.width / 2, canvas.height / 2 - 8);
   context.font = '14px Arial';
-  context.fillText('Click Start to Begin', canvas.width / 2, canvas.height / 2 + 20);
+  context.fillText('Dry village is in the top-left. Click Start to Begin.', canvas.width / 2, canvas.height / 2 + 20);
+}
+
+function drawFloodLossOverlay() {
+  context.fillStyle = 'rgba(7, 76, 140, 0.95)';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  context.fillStyle = 'rgba(27, 118, 196, 0.45)';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+
+  context.strokeStyle = 'rgba(200, 238, 255, 0.9)';
+  for (let i = 0; i < 20; i++) {
+    const bubbleX = (i * 31 + game.frame * 1.5) % (canvas.width + 20);
+    const bubbleY = canvas.height - ((game.frame * 1.1 + i * 29) % 260);
+    const radius = 3 + (i % 4);
+    context.beginPath();
+    context.arc(bubbleX, bubbleY, radius, 0, Math.PI * 2);
+    context.stroke();
+  }
+
+  context.fillStyle = '#ffffff';
+  context.textAlign = 'center';
+  context.font = 'bold 22px Arial';
+  context.fillText('Flooded Village - You Lost', canvas.width / 2, canvas.height / 2 - 10);
+  context.font = '14px Arial';
+  context.fillText('Flood warning crossed over ' + game.floodScore + ' points.', canvas.width / 2, canvas.height / 2 + 16);
+  context.fillText('The town is underwater. Press Play Again.', canvas.width / 2, canvas.height / 2 + 36);
+}
+
+function drawWinOverlay() {
+  context.fillStyle = 'rgba(15, 110, 81, 0.68)';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = '#ffffff';
+  context.textAlign = 'center';
+  context.font = 'bold 24px Arial';
+  context.fillText('Congratulations!', canvas.width / 2, canvas.height / 2 - 16);
+  context.font = 'bold 18px Arial';
+  context.fillText('Village Flourishing Achieved', canvas.width / 2, canvas.height / 2 + 10);
+  context.font = '14px Arial';
+  context.fillText('You protected the town for 30 seconds with full water storage.', canvas.width / 2, canvas.height / 2 + 34);
 }
 
 function loop() {
   requestAnimationFrame(loop);
   game.frame++;
 
-  if (game.state !== 'playing') {
+  if (game.state === 'start') {
     drawBoard();
     drawOverlay('Water Runner');
+    return;
+  }
+
+  if (game.state === 'lost') {
+    drawBoard();
+    drawFloodLossOverlay();
+    return;
+  }
+
+  if (game.state === 'won') {
+    drawBoard();
+    updateConfetti();
+    drawConfetti();
+    drawWinOverlay();
     return;
   }
 
@@ -561,6 +860,10 @@ function loop() {
 
   updateDrops();
   maybeShowDamSuggestion();
+  const nowMs = performance.now();
+  updateStoredWaterDrain(nowMs);
+  updateFlourishWin(nowMs);
+  checkFloodLoss();
   drawBoard();
 }
 
@@ -579,6 +882,16 @@ document.addEventListener('keydown', function(e) {
     game.keys.right = true;
   }
 
+  if (e.key === KEY_UP) {
+    e.preventDefault();
+    game.keys.up = true;
+  }
+
+  if (e.key === KEY_DOWN) {
+    e.preventDefault();
+    game.keys.down = true;
+  }
+
   if (e.key === 'd' || e.key === 'D') {
     e.preventDefault();
     buildDam();
@@ -592,6 +905,12 @@ document.addEventListener('keyup', function(e) {
   if (e.key === KEY_RIGHT) {
     game.keys.right = false;
   }
+  if (e.key === KEY_UP) {
+    game.keys.up = false;
+  }
+  if (e.key === KEY_DOWN) {
+    game.keys.down = false;
+  }
 });
 
 startBtn.addEventListener('click', function() {
@@ -600,6 +919,10 @@ startBtn.addEventListener('click', function() {
 
 buildDamBtn.addEventListener('click', function() {
   buildDam();
+});
+
+playAgainBtn.addEventListener('click', function() {
+  startGame();
 });
 
 resetGame();
