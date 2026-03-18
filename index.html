@@ -220,7 +220,7 @@
   }
 
   .hidden {
-    display: none;
+    display: none !important;
   }
 
   @media (max-width: 500px) {
@@ -296,14 +296,15 @@ const game = {
   frame: 0,
   score: 0,
   rainIntensity: 0.52,
+  postDamRainIntensity: 0.2,
   tinsRequired: 3,
   damPromptScore: 25,
   waterStorageMax: 100,
-  floodScore: 135,
+  floodScore: 160,
   flourishWinSeconds: 30,
   clearPromptScore: 30,
   drainIntervalMs: 1000,
-  drainAmountPerTick: 5,
+  drainAmountPerTick: 2,
   storedWater: 0,
   tinsFilled: 0,
   damBuilt: false,
@@ -354,6 +355,7 @@ function resetRiver() {
 
 function resetGame() {
   game.score = 0;
+  game.rainIntensity = 0.52;
   game.storedWater = 0;
   game.tinsFilled = 0;
   game.frame = 0;
@@ -384,7 +386,7 @@ function startGame() {
   game.state = 'playing';
   startBtn.classList.add('hidden');
   startBtn.disabled = true;
-  setStatus('Move with arrows, collect rain, and build a dam by score 25.');
+  setStatus('Move with arrows, collect rain, and build a dam to route water to the village.');
 }
 
 function updateHud() {
@@ -456,7 +458,7 @@ function maybeShowDamSuggestion() {
   if (game.score >= game.damPromptScore && game.score < game.clearPromptScore && !game.damPromptShown) {
     game.damPromptShown = true;
     setStatus('Build a dam now: route water to the dry village.');
-    setSuggestion('Store water in tins and build by score 25 to stay win-eligible.');
+    setSuggestion('Store water, build the dam, keep score under 135, and reach 100 stored water.');
   }
 
   if (game.score >= game.clearPromptScore && !game.damBuilt) {
@@ -596,6 +598,7 @@ function buildDam() {
   game.damBuilt = true;
   game.flourishStartMs = performance.now();
   game.lastPenaltyTickMs = game.flourishStartMs;
+  game.rainIntensity = game.postDamRainIntensity;
   game.river.direction = -1;
   updateHud();
   setStatus('Dam built! Town now uses 5 stored water per second.');
