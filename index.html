@@ -56,11 +56,17 @@
     color: #ffd35f;
   }
 
+  #boardWrap {
+    position: relative;
+    width: min(440px, 100%);
+    align-self: center;
+  }
+
   #startBtn {
     position: absolute;
-    top: 50%;
+    bottom: 14px;
     left: 50%;
-    transform: translate(-50%, -50%);
+    transform: translateX(-50%);
     width: 96px;
     height: 96px;
     border: 0;
@@ -80,7 +86,7 @@
   }
 
   #startBtn:hover {
-    transform: translate(-50%, -50%) scale(1.04);
+    transform: translateX(-50%) scale(1.04);
   }
 
   #startBtn:focus-visible {
@@ -250,9 +256,6 @@
       <span id="brandText">Water Runner</span>
     </div>
   </div>
-  <button id="startBtn" type="button" aria-label="Start game">
-    <img src="img/water-can.png" alt="Start Water Runner">
-  </button>
   <div id="hud">
     <span id="score">Score: 0</span>
     <span id="timer">Flourish: --</span>
@@ -269,7 +272,12 @@
     <button id="buildDam" type="button" disabled>Build Dam (locked)</button>
     <span id="controlHint">Move: ← → ↑ ↓ | Build Dam: D</span>
   </div>
-  <canvas width="440" height="440" id="game"></canvas>
+  <div id="boardWrap">
+    <canvas width="440" height="440" id="game"></canvas>
+    <button id="startBtn" type="button" aria-label="Start game">
+      <img src="img/water-can.png" alt="Start Water Runner">
+    </button>
+  </div>
   <p id="status"></p>
   <p id="milestone"></p>
   <button id="playAgainBtn" type="button" class="hidden">Play Again</button>
@@ -300,7 +308,7 @@ const game = {
   tinsRequired: 3,
   damPromptScore: 25,
   waterStorageMax: 100,
-  floodScore: 160,
+  floodScore: 135,
   flourishWinSeconds: 30,
   clearPromptScore: 30,
   drainIntervalMs: 1000,
@@ -467,6 +475,7 @@ function maybeShowDamSuggestion() {
 }
 
 function checkFloodLoss() {
+  // Loss rule: if score goes above floodScore while playing, the village floods.
   if (game.state !== 'playing') {
     return;
   }
@@ -483,6 +492,7 @@ function checkFloodLoss() {
 }
 
 function loseGame(reason) {
+  // Loss screen state: show flood messaging and Play Again button.
   game.state = 'lost';
   buildDamBtn.disabled = true;
   buildDamBtn.textContent = 'Flooded';
@@ -493,6 +503,7 @@ function loseGame(reason) {
 }
 
 function winGame() {
+  // Win screen state: show celebration messaging, Play Again, and confetti.
   game.state = 'won';
   buildDamBtn.disabled = true;
   buildDamBtn.textContent = 'Village Flourishing ✓';
@@ -548,6 +559,7 @@ function drawConfetti() {
 }
 
 function updateStoredWaterDrain(nowMs) {
+  // After dam is built, stored water is drained on a fixed timer.
   if (game.state !== 'playing' || !game.damBuilt) {
     return;
   }
@@ -560,6 +572,11 @@ function updateStoredWaterDrain(nowMs) {
 }
 
 function updateFlourishWin(nowMs) {
+  // Win rule check:
+  // 1) Dam is built,
+  // 2) Flourish timer reaches 30 seconds,
+  // 3) Score stays under floodScore,
+  // 4) Player reached max storage at least once.
   if (game.state !== 'playing' || !game.damBuilt) {
     return;
   }
@@ -582,6 +599,7 @@ function updateFlourishWin(nowMs) {
 }
 
 function buildDam() {
+  // Building the dam starts the flourish phase and the storage drain timer.
   if (game.state !== 'playing' || game.damBuilt) {
     return;
   }
@@ -679,6 +697,8 @@ function updateRiver() {
 }
 
 function collectDrop(index) {
+  // Collection rule: each drop gives +1 score and +1 stored water.
+  // Once storage reaches max, reachedMaxStorage is locked in for win checking.
   game.drops.splice(index, 1);
   game.score += 1;
   game.storedWater = Math.min(game.waterStorageMax, game.storedWater + 1);

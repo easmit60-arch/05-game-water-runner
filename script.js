@@ -12,9 +12,9 @@
 const DAM_UNLOCK_SCORE = 25;
 const DAM_MIN_STORED_WATER = 25;
 const FLOURISH_SECONDS = 30;
-const FLOOD_SCORE_LIMIT = 160;
+const FLOOD_SCORE_LIMIT = 135;
 const WATER_STORAGE_MAX = 100;
-const DRAIN_PER_SECOND = 2;
+const DRAIN_PER_SECOND = 5;
 const SPAWN_INTERVAL_MS = 1000;
 
 // -----------------------------
@@ -27,6 +27,7 @@ const scoreEl = document.getElementById('score');
 const storedWaterEl = document.getElementById('storedWater');
 const timerEl = document.getElementById('timer');
 const statusEl = document.getElementById('status');
+const existingPlayAgainButton = document.getElementById('playAgainBtn');
 
 // -----------------------------
 // Game state (single source of truth)
@@ -38,9 +39,185 @@ const game = {
   reachedMaxStorage: false,
   damBuilt: false,
   flourishStartMs: 0,
+  confettiIntervalId: null,
+  confettiContainer: null,
   spawnIntervalId: null,
   tickIntervalId: null
 };
+
+// Inject tiny CSS from JavaScript so this file can run without editing style.css.
+function injectUiStyles() {
+  const styleId = 'water-runner-script-styles';
+  if (document.getElementById(styleId)) {
+    return;
+  }
+
+  const styleEl = document.createElement('style');
+  styleEl.id = styleId;
+  styleEl.textContent = `
+    .script-play-again {
+      margin-top: 10px;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #2b5f86;
+      background: #0d3b66;
+      color: #ffffff;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .script-hidden {
+      display: none !important;
+    }
+
+    .script-confetti-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 9999;
+    }
+
+    .script-confetti-piece {
+      position: absolute;
+      top: -20px;
+      font-size: 18px;
+      animation: scriptConfettiFall linear forwards;
+    }
+
+    @keyframes scriptConfettiFall {
+      to {
+        transform: translateY(110vh) rotate(420deg);
+        opacity: 0.95;
+      }
+    }
+  `;
+  document.head.appendChild(styleEl);
+}
+
+// Use the real Play Again button when it exists.
+// If it does not exist, create a fallback button for this DOM script.
+function getPlayAgainButton() {
+  if (existingPlayAgainButton) {
+    return existingPlayAgainButton;
+  }
+
+  let fallbackButton = document.getElementById('scriptPlayAgainBtn');
+  if (fallbackButton) {
+    return fallbackButton;
+  }
+
+  fallbackButton = document.createElement('button');
+  fallbackButton.id = 'scriptPlayAgainBtn';
+  fallbackButton.type = 'button';
+  fallbackButton.className = 'script-play-again script-hidden';
+  fallbackButton.textContent = 'Play Again';
+
+  // Place button near status if possible; otherwise append to body.
+  if (statusEl && statusEl.parentElement) {
+    statusEl.parentElement.appendChild(fallbackButton);
+  } else {
+    document.body.appendChild(fallbackButton);
+  }
+
+  return fallbackButton;
+}
+
+const playAgainButton = getPlayAgainButton();
+
+function showPlayAgain() {
+  if (!playAgainButton) {
+    return;
+  }
+
+  playAgainButton.classList.remove('script-hidden');
+  playAgainButton.classList.remove('hidden');
+}
+
+function hidePlayAgain() {
+  if (!playAgainButton) {
+    return;
+  }
+
+  playAgainButton.classList.add('script-hidden');
+}
+
+// Paint the page to communicate village state to beginners.
+function updateVillageBackground() {
+  if (!document.body) {
+    return;
+  }
+
+  if (game.state === 'won') {
+    document.body.style.background = 'linear-gradient(180deg, #d7f7df 0%, #9ee39c 100%)';
+    return;
+  }
+
+  if (game.state === 'lost') {
+    document.body.style.background = 'linear-gradient(180deg, #9ec8ef 0%, #4a89c9 100%)';
+    return;
+  }
+
+  if (game.state === 'playing' && game.damBuilt) {
+    // Village is flourishing in the background once dam is built.
+    document.body.style.background = 'linear-gradient(180deg, #edf9ee 0%, #b7e8b2 100%)';
+    return;
+  }
+
+  // Dry village default background.
+  document.body.style.background = 'linear-gradient(180deg, #f3efe3 0%, #d7c59d 100%)';
+}
+
+function clearConfetti() {
+  if (game.confettiIntervalId) {
+    clearInterval(game.confettiIntervalId);
+    game.confettiIntervalId = null;
+  }
+
+  if (game.confettiContainer && game.confettiContainer.parentElement) {
+    game.confettiContainer.parentElement.removeChild(game.confettiContainer);
+  }
+
+  game.confettiContainer = null;
+}
+
+function launchConfetti() {
+  clearConfetti();
+
+  const layer = document.createElement('div');
+  layer.className = 'script-confetti-layer';
+  document.body.appendChild(layer);
+  game.confettiContainer = layer;
+
+  const pieces = ['🎉', '✨', '🎊'];
+  let created = 0;
+  const maxPieces = 90;
+
+  game.confettiIntervalId = setInterval(() => {
+    for (let count = 0; count < 6; count += 1) {
+      if (created >= maxPieces) {
+        clearInterval(game.confettiIntervalId);
+        game.confettiIntervalId = null;
+        return;
+      }
+
+      const piece = document.createElement('span');
+      piece.className = 'script-confetti-piece';
+      piece.textContent = pieces[Math.floor(Math.random() * pieces.length)];
+      piece.style.left = `${Math.floor(Math.random() * 100)}%`;
+      piece.style.animationDuration = `${2 + Math.random() * 2}s`;
+      layer.appendChild(piece);
+
+      setTimeout(() => {
+        if (piece.parentElement) {
+          piece.parentElement.removeChild(piece);
+        }
+      }, 4500);
+
+      created += 1;
+    }
+  }, 120);
+}
 
 // Creates a simple 3x3 DOM grid.
 function createGrid() {
@@ -165,6 +342,7 @@ function buildDam() {
   game.flourishStartMs = Date.now();
 
   setStatus(`Dam built! Keep score under ${FLOOD_SCORE_LIMIT} for ${FLOURISH_SECONDS}s and reach ${WATER_STORAGE_MAX} stored water.`);
+  updateVillageBackground();
   updateHud();
 }
 
@@ -177,7 +355,9 @@ function checkLoss() {
   if (game.score > FLOOD_SCORE_LIMIT) {
     game.state = 'lost';
     stopLoops();
-    setStatus(`You lost: score went above ${FLOOD_SCORE_LIMIT}.`);
+    setStatus(`Flooded village. You lost because score went above ${FLOOD_SCORE_LIMIT}.`);
+    updateVillageBackground();
+    showPlayAgain();
     updateHud();
   }
 }
@@ -197,7 +377,10 @@ function checkWin(nowMs = Date.now()) {
   if (flourishDone && scoreSafe && storageGoalMet) {
     game.state = 'won';
     stopLoops();
-    setStatus('You win! Dam built, flourish time complete, safe score, and storage goal reached.');
+    setStatus('🎉 Congratulations! The village is flourishing. You won by keeping score under 135 for 30 seconds and reaching 100 stored water.');
+    updateVillageBackground();
+    launchConfetti();
+    showPlayAgain();
     updateHud(nowMs);
   }
 }
@@ -233,6 +416,7 @@ function stopLoops() {
 // Resets all state values for a new run.
 function resetGame() {
   stopLoops();
+  clearConfetti();
 
   game.state = 'start';
   game.score = 0;
@@ -242,6 +426,8 @@ function resetGame() {
   game.flourishStartMs = 0;
 
   createGrid();
+  hidePlayAgain();
+  updateVillageBackground();
   updateHud();
   setStatus('Press Start to begin.');
 }
@@ -260,6 +446,8 @@ function startGame() {
   game.flourishStartMs = 0;
 
   createGrid();
+  hidePlayAgain();
+  updateVillageBackground();
   updateHud();
   setStatus('Collect drops, build dam, survive 30s, stay under 135, and max out storage.');
 
@@ -279,5 +467,10 @@ if (buildDamButton) {
   buildDamButton.addEventListener('click', buildDam);
 }
 
+if (playAgainButton) {
+  playAgainButton.addEventListener('click', startGame);
+}
+
 // Run setup once.
+injectUiStyles();
 resetGame();
