@@ -100,6 +100,7 @@
       <a href="#prompt-5">Prompt 5</a>
       <a href="#prompt-6">Prompt 6</a>
       <a href="#prompt-7">Prompt 7</a>
+      <a href="#prompt-8">Prompt 8</a>
       <a href="#next-iteration">Next Iteration</a>
     </nav>
 
@@ -504,6 +505,55 @@ Technical requirements:
 - On flood loss:
   - Draw deep-blue screen overlay with bubble circles
   - Show loss text and restart instruction</div>
+
+  <hr>
+
+  <h2 id="prompt-8">Prompt 8: Start-Click River Snake + Rain Storm Collection</h2>
+  <p>This prompt focuses on a side-to-side river snake that grows from bottom collection of energetic falling rain drops.</p>
+
+  <h3>Gameplay Rules</h3>
+  <ul>
+    <li>Player clicks <strong>Start</strong> to begin.</li>
+    <li>River snake can move only left/right.</li>
+    <li>Rain drops fall top-to-bottom with random, energetic motion.</li>
+    <li>Each collected drop adds <code>+1</code> score.</li>
+    <li>River snake grows as drops are collected and builds up across the bottom area.</li>
+    <li>At score <code>25</code>, suggest building a dam with water tins.</li>
+    <li>Dammed flow should route water toward the village in the top-left.</li>
+    <li>Clear dam suggestion before score reaches <code>30</code>.</li>
+  </ul>
+
+  <h3>Prompt 8 (Copy/Paste)</h3>
+  <div class="prompt-box">Update Water Runner with this exact behavior:
+
+1) On Start button click, spawn a river snake at the bottom of the screen.
+2) River snake movement is left/right only.
+3) Spawn water drops from top to bottom with energetic random rain movement.
+4) On each drop collected by the river snake:
+   - Add +1 to score
+   - Grow river snake length
+5) At score 25:
+   - Prompt player to build a dam with water tins
+   - Explain that tins force the river flow toward the top-left village
+6) Clear/remove suggestion before score reaches 30.
+
+Visual requirements:
+- Keep charity: water style cues and readable UI.
+- Show dry village in top-left and improved/flourishing village after successful damming.</div>
+
+  <h3>Prompt 8.1 (Copy/Paste - Directly in <code>snake.html</code>)</h3>
+  <div class="prompt-box">Implement Prompt 8 directly in snake.html.
+
+Technical requirements:
+- Add Start button-based game launch.
+- Restrict movement input to ArrowLeft/ArrowRight.
+- Replace single target with multiple falling rain drops (randomized velocity and drift).
+- Collision with river snake segments adds +1 score and grows river length.
+- Keep snake flow slow and anchored near bottom.
+- At score >= 25 and < 30, show dam suggestion text.
+- Add water tin indicators and Build Dam control.
+- If dam builds successfully, render visible water flow toward top-left village and flourishing village state.
+- At score >= 30, clear suggestion text if still visible.</div>
 
   <hr>
 
