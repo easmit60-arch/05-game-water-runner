@@ -6,9 +6,6 @@ This README formats the previous and following prompts into one place so you can
 
 - Primary playable game (Prompt 8 mechanics): `index.html`
 - Prompt guide text (all prompts): `README.md`
-- Archived prompt-guide page snapshot: `prompts-guide.html`
-- Compatibility redirect: `snake.html` → `index.html`
-- Prompt 6 HTML/CSS-only prototype: `prompt6-water-runner.html` + `prompt6-water-runner.css`
 - Legacy starter files from the earlier grid game: `script.js` + `style.css` (kept for reference)
 
 ## Prompt 1: Theme + Mechanics Planning
@@ -341,9 +338,7 @@ Output:
 
 ### Prompt 6.1 (Copy/Paste - Implement in New Files)
 ```text
-Implement Prompt 6 in two new files:
-- prompt6-water-runner.html
-- prompt6-water-runner.css
+Implement Prompt 6 in two new files (one .html and one .css).
 
 Constraints:
 - HTML + CSS only (no JavaScript)

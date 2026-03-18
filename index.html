@@ -70,19 +70,24 @@
     cursor: not-allowed;
   }
 
-  #metaLinks {
+  .top-nav {
     display: flex;
-    justify-content: flex-end;
+    justify-content: center;
     gap: 10px;
     font-size: 12px;
+    padding: 6px 8px;
+    border: 1px solid #365a7b;
+    border-radius: 6px;
+    background: #0c1c30;
   }
 
-  #metaLinks a {
+  .top-nav a {
     color: #8cc8ff;
     text-decoration: none;
+    font-weight: 600;
   }
 
-  #metaLinks a:hover {
+  .top-nav a:hover {
     text-decoration: underline;
   }
 
@@ -189,16 +194,16 @@
 </head>
 <body>
 <div class="game-shell">
+  <nav class="top-nav" aria-label="Main navigation">
+    <a href="index.html">Game</a>
+    <a href="README.md">Prompt Guide (README)</a>
+  </nav>
   <div id="topBar">
     <div id="brand">
       <img src="img/cw_logo_horizontal.png" alt="charity: water logo">
       <span id="brandText">Water Runner</span>
     </div>
     <button id="startBtn" type="button">Start</button>
-  </div>
-  <div id="metaLinks">
-    <a href="README.md">Prompt Guide (README)</a>
-    <a href="prompts-guide.html">Archived Prompt Page</a>
   </div>
   <div id="hud">
     <span id="score">Score: 0</span>
@@ -260,9 +265,8 @@ function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min)) + min;
 }
 
-function clamp(value, min, max) {
-  return Math.max(min, Math.min(max, value));
-}
+const KEY_LEFT = 'ArrowLeft';
+const KEY_RIGHT = 'ArrowRight';
 
 function setStatus(message) {
   statusEl.textContent = message;
@@ -565,12 +569,12 @@ document.addEventListener('keydown', function(e) {
     return;
   }
 
-  if (e.key === 'ArrowLeft') {
+  if (e.key === KEY_LEFT) {
     e.preventDefault();
     game.keys.left = true;
   }
 
-  if (e.key === 'ArrowRight') {
+  if (e.key === KEY_RIGHT) {
     e.preventDefault();
     game.keys.right = true;
   }
@@ -582,10 +586,10 @@ document.addEventListener('keydown', function(e) {
 });
 
 document.addEventListener('keyup', function(e) {
-  if (e.key === 'ArrowLeft') {
+  if (e.key === KEY_LEFT) {
     game.keys.left = false;
   }
-  if (e.key === 'ArrowRight') {
+  if (e.key === KEY_RIGHT) {
     game.keys.right = false;
   }
 });
