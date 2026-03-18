@@ -3,21 +3,520 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width">
-  <title>Water Quest</title>
-  <link href="style.css" rel="stylesheet" type="text/css" />
+  <title>Water Runner Prompts Guide</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f8fb;
+      color: #1a2633;
+      line-height: 1.5;
+    }
+
+    .container {
+      max-width: 980px;
+      margin: 24px auto;
+      background: #ffffff;
+      border: 1px solid #d8e3ec;
+      border-radius: 8px;
+      padding: 20px;
+    }
+
+    h1, h2, h3, h4 {
+      margin-top: 0;
+      color: #0d3b66;
+    }
+
+    hr {
+      border: 0;
+      border-top: 1px solid #d8e3ec;
+      margin: 24px 0;
+    }
+
+    iframe {
+      width: 100%;
+      min-height: 450px;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      border-radius: 6px;
+    }
+
+    .prompt-box {
+      background: #f7fbff;
+      border: 1px solid #cfe2f3;
+      border-radius: 6px;
+      padding: 14px;
+      margin-top: 12px;
+      white-space: pre-wrap;
+    }
+
+    ul {
+      margin-top: 6px;
+    }
+
+    p {
+      margin-top: 8px;
+    }
+
+    .top-nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 10px 0 18px;
+      padding: 10px;
+      background: #f7fbff;
+      border: 1px solid #cfe2f3;
+      border-radius: 6px;
+    }
+
+    .top-nav a {
+      color: #0d3b66;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .top-nav a:hover {
+      text-decoration: underline;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
-    <h1>Water Quest</h1>
-    <p class="game-instructions">Collect 20 items to complete the game!</p>
-    <div class="stats">
-      <p>Cans Collected: <span id="current-cans">0</span></p>
-      <p>Time Left: <span id="timer">30</span>s</p>
-    </div>
-    <div id="achievements" class="achievement"></div>
-    <div class="game-grid"></div>
-    <button id="start-game">Start Game</button>
+    <h1>Water Runner Prompts Guide</h1>
+    <p>This page formats the previous and following prompts into one place so you can quickly reuse them with GitHub Copilot.</p>
+
+    <h3>Aligned Project Files</h3>
+    <ul>
+      <li><a href="snake.html">snake.html</a> — JavaScript Water Runner MVP with timed confetti milestones.</li>
+      <li><a href="prompt6-water-runner.html">prompt6-water-runner.html</a> — Prompt 6 HTML/CSS-only prototype.</li>
+      <li><a href="README.md">README.md</a> — full prompt library (Prompt 1 through Prompt 6.1).</li>
+    </ul>
+
+    <nav class="top-nav" aria-label="Prompt sections">
+      <a href="#prompt-1">Prompt 1</a>
+      <a href="#prompt-2">Prompt 2</a>
+      <a href="#prompt-3">Prompt 3</a>
+      <a href="#prompt-4">Prompt 4</a>
+      <a href="#prompt-5">Prompt 5</a>
+      <a href="#prompt-6">Prompt 6</a>
+      <a href="#prompt-7">Prompt 7</a>
+      <a href="#next-iteration">Next Iteration</a>
+    </nav>
+
+    <h2 id="prompt-1">Prompt 1: Theme + Mechanics Planning</h2>
+
+    <h3>Goal</h3>
+    <p>Create a Snake-like game using HTML, CSS, and JavaScript where:</p>
+    <ul>
+      <li>The snake is a river</li>
+      <li>The player collects water droplets</li>
+      <li>Water is stored in a water can</li>
+    </ul>
+
+    <h3>Key Considerations</h3>
+    <ul>
+      <li>Define the core loop: move, collect, store, survive</li>
+      <li>Use a clear can capacity (for example, 12) so there is a win target</li>
+      <li>Add HUD info: score, stored water, capacity</li>
+      <li>Choose boundary behavior: wrap-around or wall collision</li>
+      <li>Add start/playing/win/lose game states</li>
+      <li>Prevent water drops from spawning inside the river body</li>
+    </ul>
+
+    <h3>Prompt 1 (Copy/Paste)</h3>
+    <div class="prompt-box">I want to create a simple Snake-like game using HTML, CSS, and JavaScript. I want the snake to be a river, and people would collect water drops and store water in a water can.
+
+Please suggest key considerations and gameplay mechanics for:
+- Core loop
+- Difficulty progression
+- HUD design
+- Win/lose states
+- Fair spawning logic</div>
+
+    <hr>
+
+    <h2 id="prompt-2">Prompt 2: Single-Player Game Generation Prompt</h2>
+
+    <h3>Figma Reference</h3>
+    <p>Board:</p>
+    <iframe src="https://embed.figma.com/board/c9WVeXOsg0Du7TdWuMdypq/Water-Charity?node-id=0-1&amp;embed-host=share" allowfullscreen></iframe>
+
+    <h3>Required Feature Spec</h3>
+
+    <h4>1) Game Start</h4>
+    <p><strong>When the game first loads:</strong></p>
+    <ul>
+      <li>Pixel-art title: <strong>Water Runner: Retro Impact</strong></li>
+      <li>Subtitle: <strong>Collect. Build. Deliver.</strong></li>
+      <li><strong>Press Start</strong> button</li>
+      <li>Optional toggle: <strong>Enable AI Assistant</strong></li>
+    </ul>
+    <p><strong>When gameplay begins:</strong></p>
+    <ul>
+      <li>Small 2D map loads</li>
+      <li>Top of screen: falling water droplets spawn</li>
+      <li>Bottom: dry village (brown trees, cracked earth)</li>
+      <li>Player starts centered near bottom</li>
+      <li>UI visible:
+        <ul>
+          <li>Water Tank Meter (stored water)</li>
+          <li>Score counter</li>
+          <li>Infrastructure buttons (Well / River / Dam)</li>
+          <li>AI Helper icon (Clippy-style NPC)</li>
+        </ul>
+      </li>
+      <li>Minimal pixel sound effects</li>
+    </ul>
+
+    <h4>2) Player Actions</h4>
+    <ul>
+      <li>Movement</li>
+      <li>Collecting</li>
+      <li>Building</li>
+      <li>AI Assistant Interaction</li>
+    </ul>
+
+    <h4>3) Game Logic</h4>
+    <p><strong>Collect → Spend → Route → Deliver → Transform</strong></p>
+
+    <h4>4) Score / Feedback</h4>
+    <ul>
+      <li>Score increases</li>
+      <li>Visual feedback</li>
+      <li>Educational feedback</li>
+      <li>Audio feedback</li>
+    </ul>
+
+    <h4>5) Win / Lose Conditions</h4>
+    <p><strong>Win:</strong></p>
+    <ul>
+      <li>Village reaches <strong>Thriving</strong> state</li>
+      <li>Final message:
+        <ul>
+          <li>“You delivered 10,000 virtual liters.”</li>
+          <li>“Real impact starts here.”</li>
+          <li>Button: “Support Real Water Access”</li>
+        </ul>
+      </li>
+    </ul>
+    <p><strong>Lose (light, not punishing):</strong></p>
+    <ul>
+      <li>Water tank reaches 0</li>
+      <li>Player misses 10 droplets consecutively</li>
+    </ul>
+
+    <h3>Narrative Summary</h3>
+    <p>Water Runner draws inspiration from early mobile classics like Snake and Tetris — intentionally simple, pixel-styled, and accessible. The gameplay loop is intuitive: players collect falling water droplets, use them to build wells, rivers, and dams, and deliver clean water to a dry village. As water reaches the community, the landscape visibly transforms from barren to thriving — reinforcing the visual story at the heart of charity: water’s work.</p>
+
+    <h3>Prompt 2 (Copy/Paste)</h3>
+    <div class="prompt-box">Build a single-player, retro pixel-art browser game called “Water Runner: Retro Impact” using only HTML, CSS, and vanilla JavaScript (no external libraries).
+
+Required flow:
+1) Start screen with title, subtitle “Collect. Build. Deliver.”, Press Start button, and optional “Enable AI Assistant” toggle.
+2) Gameplay scene with falling droplets at top, dry village at bottom, player near bottom center.
+3) UI always visible: Water Tank Meter, Score, Well/River/Dam buttons, AI helper icon.
+4) Core gameplay loop: Collect → Spend → Route → Deliver → Transform.
+5) Feedback: score updates, visual cues, educational snippets, minimal retro sounds.
+6) Win when village reaches “Thriving” and show:
+   - “You delivered 10,000 virtual liters.”
+   - “Real impact starts here.”
+   - “Support Real Water Access” button.
+7) Lose if water tank hits 0 or player misses 10 droplets in a row.
+
+Technical constraints:
+- Use finite states: start, playing, won, lost.
+- Keep code modular with clear functions for spawn, collision, scoring, routing, UI, and win/lose checks.
+- Keep the experience simple, accessible, and performant.
+
+Output format:
+- Provide full runnable code.
+- Prefer one self-contained HTML file first; optionally show split version for style.css and script.js.</div>
+
+    <hr>
+
+    <h2 id="prompt-3">Prompt 3: Visual Design + Brand Styling</h2>
+    <p>I want my Snake river game, called <strong>Water Runner</strong>, to have a clean and playful design that aligns with charity: water branding.</p>
+
+    <h3>Suggested Look and Feel</h3>
+    <ul>
+      <li><strong>Style:</strong> clean pixel-art UI, rounded cards, playful but simple HUD, clear contrast for readability</li>
+      <li><strong>Color direction:</strong> charity: water-inspired yellow + blue accents with neutral backgrounds (verify exact values with official brand guide)</li>
+      <li><strong>Starter palette:</strong>
+        <ul>
+          <li>Primary yellow: #FFC907</li>
+          <li>Deep blue: #0D3B66</li>
+          <li>Aqua accent: #35C7FF</li>
+          <li>Warm sand: #F5E6C8</li>
+          <li>Dark text: #1F2A37</li>
+          <li>Off-white: #F8FBFF</li>
+        </ul>
+      </li>
+      <li><strong>Google Font pairing:</strong> <em>Baloo 2</em> (headlines) + <em>Nunito</em> (body/UI)</li>
+      <li><strong>Logo use:</strong> place provided charity: water logo in header/start screen with clear spacing</li>
+      <li><strong>Responsive rules:</strong> fluid container, scalable canvas, readable HUD on mobile breakpoints</li>
+    </ul>
+
+    <h3>Prompt 3 (Copy/Paste)</h3>
+    <div class="prompt-box">I want my Snake river game called "Water Runner" to have a clean and playful design.
+
+Please suggest and apply:
+1) A color scheme aligned with charity: water brand styling,
+2) A visual style direction (pixel-art but modern and readable),
+3) A matching Google Font pairing for title + UI text,
+4) Responsive CSS rules so layout works well on desktop, tablet, and mobile.
+
+Requirements:
+- Use the provided charity: water logo in the UI.
+- Follow the charity: water brand guidelines: https://drive.google.com/file/d/1ct4zYRIwHAtxoNQoeaVwWYPdnruSC6sr/view
+- Keep the game design clean, playful, accessible, and on-brand.
+- Return CSS variables for colors, font import links, and updated style rules.</div>
+
+    <hr>
+
+    <h2 id="prompt-4">Prompt 4: CSS Generation + Logic Review</h2>
+    <p>Based on the design ideas above, this prompt is for generating new CSS for the Snake River game called <strong>Water Runner</strong>, while also requesting a quick logic critique.</p>
+
+    <h3>Context Summary</h3>
+    <ul>
+      <li>Game concept: <strong>Water Runner (Retro Catch + Build)</strong></li>
+      <li>Combines visual impact from Idea 1 with conceptual depth from Idea 3 (AI tradeoff simulator)</li>
+      <li>Includes AI-style NPC helper inspired by Clippy (Microsoft Office 97)</li>
+      <li>Nostalgic style inspired by early mobile classics (Snake, Tetris): pixel graphics, limited palette, minimal controls</li>
+      <li>Educational theme: clean water access + hidden water cost of technology</li>
+    </ul>
+
+    <h3>Core Gameplay Loop</h3>
+    <p><strong>Collect Water → Build Infrastructure → Deliver to Communities → Repeat</strong></p>
+
+    <h3>Phases</h3>
+    <ol>
+      <li><strong>Collect:</strong> Move left/right to catch falling droplets; each droplet increases stored water.</li>
+      <li><strong>Build:</strong> Spend water to build wells, rivers, and basic dams that route water toward communities.</li>
+      <li><strong>Deliver:</strong> Community transforms (dry → green → thriving), shows a real-world fact, and increases score.</li>
+    </ol>
+
+    <h3>AI Tradeoff Mechanic</h3>
+    <p>AI helper can auto-catch droplets for 5 seconds, reveal optimal dam placement, or slow droplet fall speed.</p>
+    <ul>
+      <li>AI use costs stored water</li>
+      <li>Can trigger a visible “data center cooling” animation siphoning water</li>
+      <li>Balancing option: AI costs less after infrastructure improves</li>
+    </ul>
+    <p>Educational messages:</p>
+    <ul>
+      <li>“Did you know? Training one large AI model can use ~700,000 liters of water.”</li>
+      <li>“Data centers use millions of gallons of water each year to cool servers.”</li>
+    </ul>
+
+    <h3>Prompt 4 (Copy/Paste)</h3>
+    <div class="prompt-box">Based on my Water Runner game concept, generate a complete CSS redesign only (no HTML or JavaScript changes).
+
+Game context:
+- Retro Snake/Tetris-inspired web game for charity: water awareness
+- Core loop: Collect Water → Build Infrastructure → Deliver to Communities → Repeat
+- Includes AI helper tradeoff mechanic (convenience costs water)
+
+CSS requirements:
+1) Create a clean, playful, pixel-inspired visual style aligned with charity: water branding.
+2) Use a reusable token system with CSS variables (:root) for colors, spacing, radius, shadows, and typography.
+3) Include Google Font pairing for headings and body/UI text.
+4) Style these areas:
+   - Start screen
+   - Game canvas/container
+   - HUD (score, tank meter, status)
+   - Build buttons (Well/River/Dam)
+   - AI helper button/icon and warning/cost states
+   - Educational popups
+   - Win/Lose overlays
+5) Add responsive breakpoints for desktop, tablet, and mobile.
+6) Ensure accessibility (contrast, focus states, readable text, reduced-motion support).
+7) Keep visuals nostalgic but polished (simple borders, blocky/pixel feel, light playful accents).
+
+Also include a short critique of my game logic:
+- Confirm whether the loop/mechanics make sense.
+- Identify weaknesses or risks.
+- Suggest 5 practical improvements (especially around balance, clarity, and player onboarding).</div>
+
+    <h3>Logic Weaknesses + Improvement Opportunities</h3>
+    <ul>
+      <li><strong>Complexity risk:</strong> players may feel overloaded by collect/build/route/AI decisions at once.</li>
+      <li><strong>Pacing risk:</strong> AI cost and infrastructure cost can double-drain resources and stall progress.</li>
+      <li><strong>Clarity risk:</strong> tradeoff consequences may be unclear without strong UI previews.</li>
+      <li><strong>Flow risk:</strong> educational popups can interrupt active play if timed poorly.</li>
+      <li><strong>Balance risk:</strong> win/lose pacing may feel unfair without catch-up mechanics.</li>
+    </ul>
+    <p>Suggested improvements:</p>
+    <ol>
+      <li>Add a 60–90 second onboarding phase that unlocks mechanics gradually.</li>
+      <li>Show projected water cost before AI or build actions are confirmed.</li>
+      <li>Use non-blocking tooltip/toast facts instead of modal interruptions.</li>
+      <li>Add adaptive difficulty (drop-rate smoothing when player is struggling).</li>
+      <li>Add recovery paths (small passive refill or streak bonuses) to avoid deadlock states.</li>
+    </ol>
+
+    <hr>
+
+    <h2 id="prompt-5">Prompt 5: Confetti Milestones (Timed Score)</h2>
+    <p>Use this prompt to add celebration effects based on time-limited score milestones.</p>
+
+    <h3>Milestone Rules</h3>
+    <ul>
+      <li>Trigger confetti if water score reaches <code>10</code> in under <code>10</code> seconds.</li>
+      <li>Trigger confetti if water score reaches <code>30</code> (or greater) in under <code>30</code> seconds.</li>
+    </ul>
+
+    <h3>Prompt 5 (Copy/Paste)</h3>
+    <div class="prompt-box">Update my Water Runner game to use a JavaScript confetti library and trigger confetti for timed score milestones.
+
+Requirements:
+1) Use a lightweight JS confetti library (prefer canvas-confetti).
+2) Add milestone logic based on elapsed game time:
+   - Trigger confetti when water score reaches 10 in under 10 seconds.
+   - Trigger confetti when water score reaches 30 or more in under 30 seconds.
+3) Ensure each milestone confetti effect fires only once per game run.
+4) Reset milestone flags when a new game starts.
+5) Keep existing gameplay logic intact (no unrelated feature changes).
+6) Add clear helper functions, e.g.:
+   - checkTimedMilestones(score, elapsedSeconds)
+   - launchConfetti(level)
+7) If the confetti library is unavailable, fail gracefully without breaking the game.
+
+Output:
+- Show the exact code changes needed in HTML/JS.
+- Include where to place the library import and milestone checks in the game loop.</div>
+
+    <h3>Prompt 5.1 (Copy/Paste - Directly in <code>snake.html</code>)</h3>
+    <div class="prompt-box">Implement Prompt 5 directly in my existing snake.html game.
+
+Do these exact changes:
+1) Add canvas-confetti via CDN script tag in snake.html.
+2) Track elapsed seconds from the moment gameplay starts.
+3) Trigger confetti when:
+   - water value reaches 10 in under 10 seconds
+   - water value reaches 30 or more in under 30 seconds
+4) Fire each confetti milestone only once per run.
+5) Reset milestone flags and timer on restart/new game.
+6) Keep all current game mechanics and UI behavior unchanged.
+7) Fail gracefully if confetti library is unavailable.
+
+Implementation details:
+- Add helper functions:
+  - launchConfetti(level)
+  - checkTimedMilestones(waterValue, elapsedSeconds)
+- Call `checkTimedMilestones` immediately after water value increases.
+- Add a small on-screen message when confetti milestone is hit.
+
+Return:
+- A patch-style response showing exactly what changed in snake.html.</div>
+
+    <hr>
+
+  <h2 id="prompt-6">Prompt 6: HTML + CSS Only Water Runner Screen</h2>
+  <p>Create only the HTML and CSS for Water Runner with a sleek charity: water-inspired visual design.</p>
+
+  <h3>Design Targets</h3>
+  <ul>
+    <li>Small raindrops fall from top to bottom in randomized motion.</li>
+    <li>Clicking/tapping drops collects water and grows a long blue river line (Snake-inspired accumulation).</li>
+    <li>Water can be collected and dammed with water tins.</li>
+    <li>Dry village base style: tans, beige, warm earth tones.</li>
+    <li>Thriving village style once score is over 20: deep greens, light blues, soft yellow sun.</li>
+    <li>Use charity: water branding tone and typography hierarchy for instructions, score, and congratulations.</li>
+  </ul>
+
+  <h3>Prompt 6 (Copy/Paste)</h3>
+  <div class="prompt-box">Create only HTML and CSS for a game mockup called Water Runner.
+
+Requirements:
+1) No JavaScript. Use only semantic HTML + CSS.
+2) Add small raindrops that animate from top to bottom with varied positions, delays, and speeds.
+3) Make droplets clickable (CSS-only pattern like checkbox + label is allowed).
+4) As droplets are collected, visually grow a long blue river line (Snake-like accumulation effect).
+5) Include water tins and a simple dam visual to show collection and storage.
+6) Design a dry village using tans/beige/browns.
+7) When score is over 20, switch to a thriving village palette using deep greens, light blues, and a soft yellow sun.
+8) Include charity: water-style branding layout with logo, score, instructions, and congratulations message typography.
+9) Keep design sleek, clean, and responsive across desktop/tablet/mobile.
+
+Output:
+- Return a complete HTML file and a complete CSS file only.</div>
+
+  <h3>Prompt 6.1 (Copy/Paste - Implement in New Files)</h3>
+  <div class="prompt-box">Implement Prompt 6 in two new files:
+- prompt6-water-runner.html
+- prompt6-water-runner.css
+
+Constraints:
+- HTML + CSS only (no JavaScript)
+- Include charity: water logo usage and clean, playful UI
+- CSS-only score simulation and threshold state styling for 20+
+- Responsive breakpoints and reduced-motion support
+
+After generating code, summarize how the dry -> thriving transformation is triggered.</div>
+
+  <hr>
+
+  <h2 id="prompt-7">Prompt 7: Dam Decision + Flood Consequence</h2>
+  <p>Add a decision checkpoint around mid-score where players must build a dam with water tins to protect the village.</p>
+
+  <h3>Gameplay Rules</h3>
+  <ul>
+    <li>When Water Runner score is over <code>25</code>, prompt the player to build a dam.</li>
+    <li>Instruct them to use filled water tins for dam construction.</li>
+    <li>Once a dam is built, force river flow toward the dry village and show a flourishing green village.</li>
+    <li>If no dam is built by <code>35</code> score, trigger a flood loss state.</li>
+    <li>Flood state should cover the screen in deep blue water, include bubble visuals, and display a clear loss message.</li>
+  </ul>
+
+  <h3>Prompt 7 (Copy/Paste)</h3>
+  <div class="prompt-box">Update Water Runner with dam-and-flood game logic.
+
+Rules to implement:
+1) When score is greater than 25, prompt the player to build a dam.
+2) Tell the player to use water tins to build the dam.
+3) Water tins should visibly fill up and then be used for dam construction.
+4) When dam is successfully built:
+   - Force river flow toward the dry village.
+   - Show a green, flourishing village state.
+5) If player does NOT build a dam by 35 score:
+   - Trigger flood loss.
+   - Cover the screen with deep blue flood water.
+   - Show bubbles and a clear “You lost” message.
+
+Implementation notes:
+- Keep existing movement/collection mechanics.
+- Add clear status messaging for warning, success, and failure states.
+- Include a keyboard shortcut or button for building the dam.</div>
+
+  <h3>Prompt 7.1 (Copy/Paste - Directly in <code>snake.html</code>)</h3>
+  <div class="prompt-box">Implement Prompt 7 directly in snake.html with minimal code changes.
+
+Technical requirements:
+- Add state flags: damBuilt, damPromptShown, floodTriggered.
+- Use score thresholds:
+  - Prompt at score > 25
+  - Flood loss at score >= 35 if damBuilt is false
+- Add tin indicators in HUD and a Build Dam control (button and/or key shortcut).
+- On successful dam build:
+  - Consume required tins
+  - Change village visuals to thriving (greens, healthier look)
+  - Show success message
+- On flood loss:
+  - Draw deep-blue screen overlay with bubble circles
+  - Show loss text and restart instruction</div>
+
+  <hr>
+
+    <h2 id="next-iteration">Following Prompt Template (Next Iteration)</h2>
+    <p>Use this for your next refinement request after Copilot generates version 1:</p>
+    <div class="prompt-box">Refactor the current Water Runner game without adding new features.
+Keep all existing mechanics, but improve:
+1) readability (clear naming + smaller functions),
+2) balance (spawn rate and difficulty curve),
+3) UI clarity (HUD alignment and status messaging),
+4) bug fixes (collision, missed-drop counting, win/lose reliability).
+
+Return updated code and a short changelog.</div>
   </div>
-  <script src="script.js"></script>
 </body>
 </html>

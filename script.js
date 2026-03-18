@@ -1,3 +1,8 @@
+// Legacy starter script.
+// Current Water Runner implementations are in:
+// - snake.html
+// - prompt6-water-runner.html + prompt6-water-runner.css
+
 // Game configuration and state variables
 const GOAL_CANS = 25;        // Total items needed to collect
 let currentCans = 0;         // Current number of items collected
