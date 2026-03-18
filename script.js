@@ -474,3 +474,122 @@ if (playAgainButton) {
 // Run setup once.
 injectUiStyles();
 resetGame();
+ 
+function runTrial({ maxSeconds = 80, damAtStored = 95, postDamRainIntensity = null, drainAmountPerTick = null } = {}) {
+   const env = makeEnv();
+   const s = env.api;
+   s.startGame();
+
+  if (postDamRainIntensity !== null) {
+    s.game.postDamRainIntensity = postDamRainIntensity;
+  }
+
+  if (drainAmountPerTick !== null) {
+    s.game.drainAmountPerTick = drainAmountPerTick;
+  }
+ 
+   const fps = 60;
+   const maxFrames = Math.floor(maxSeconds * fps);
+ 
+   for (let frame = 1; frame <= maxFrames; frame += 1) {
+     env.setNow(frame * (1000 / fps));
+     const g = s.game;
+ 
+     if (g.state !== 'playing') {
+       break;
+     }
+ 
+     g.keys.left = false;
+     g.keys.right = false;
+     g.keys.up = false;
+     g.keys.down = false;
+ 
+     const target = chooseTarget(g);
+     if (target) {
+       if (target.x < g.river.x - 2) {
+         g.keys.left = true;
+       } else if (target.x > g.river.x + 2) {
+         g.keys.right = true;
+       }
+ 
+       if (target.y < g.river.y - 3) {
+         g.keys.up = true;
+       } else if (target.y > g.river.y + 3) {
+         g.keys.down = true;
+       }
+     }
+ 
+     if (!g.damBuilt && g.score >= g.damPromptScore && g.storedWater >= damAtStored) {
+       s.buildDam();
+     }
+ 
+     if (!g.damBuilt && g.score > 128 && g.storedWater >= 25) {
+       s.buildDam();
+     }
+ 
+     g.frame += 1;
+     s.updateRiver();
+     if (Math.random() < g.rainIntensity) {
+       s.spawnDrop();
+     }
+     s.updateDrops();
+     s.maybeShowDamSuggestion();
+     s.updateStoredWaterDrain(s.performance.now());
+     s.updateFlourishWin(s.performance.now());
+     s.checkFloodLoss();
+   }
+ 
+   return {
+     state: s.game.state,
+     score: s.game.score,
+     storedWater: s.game.storedWater,
+     damBuilt: s.game.damBuilt
+   };
+ }
+ 
+ function runMany(n = 100, opts = {}) {
+   let won = 0;
+   let lost = 0;
+   let other = 0;
+   let totalScore = 0;
+   let totalStored = 0;
+ 
+   for (let i = 0; i < n; i += 1) {
+     const result = runTrial(opts);
+     totalScore += result.score;
+     totalStored += result.storedWater;
+ 
+     if (result.state === 'won') {
+       won += 1;
+     } else if (result.state === 'lost') {
+       lost += 1;
+     } else {
+       other += 1;
+     }
+   }
+ 
+   return {
+     n,
+     won,
+     lost,
+     other,
+     winRate: won / n,
+     avgScore: totalScore / n,
+     avgStored: totalStored / n,
+     opts
+   };
+ }
+ 
+ const n = Number(process.argv[2] || 100);
+ const damAtStored = Number(process.argv[3] || 95);
+ const maxSeconds = Number(process.argv[4] || 80);
+const postDamRainIntensity = process.argv[5] !== undefined ? Number(process.argv[5]) : null;
+const drainAmountPerTick = process.argv[6] !== undefined ? Number(process.argv[6]) : null;
+ 
+console.log(JSON.stringify(runMany(n, {
+  damAtStored,
+  maxSeconds,
+  postDamRainIntensity,
+  drainAmountPerTick
+}), null, 2));
+ 
